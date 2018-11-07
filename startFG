@@ -1,0 +1,51 @@
+#!/bin/bash
+
+fgfs --native-fdm='socket,out,30,localhost,5060,udp' \
+	--native-ctrls='socket,in,30,,5070,udp' \
+	--geometry=1024x768 \
+	--disable-panel \
+	--aircraft=f16 \
+	--airport=KSAN \
+	--disable-sound \
+	--disable-hud  \
+	--enable-clouds3d \
+	--prop:/input/joysticks/js[0]/axis[0]/binding/command=null 
+
+
+#fgfs --native-ctrls='socket,in,30,127.0.0.1,5060,udp' \
+#	--geometry=1024x768 \
+#	\
+#	--airport=KDCA \
+#	--aircraft=f16 \
+#	--disable-sound
+
+	
+# Check www.airnav.com for airport codes...
+#	--airport=2W6 \  # St.Mary's
+#	--airport=KDCA \ # Reagan National
+#       --airport=KSAN \ # San Diego International Airport
+# Aircraft
+#	--aircraft=f16 \
+#       --aircraft=tu15 \
+#       --aircraft=p51d \
+#       --aircraft=b1900d \
+
+# To disable top bar...
+# --prop:/sim/menubar/visiblity=false
+
+# To disable local joystick to flightgear
+#    --prop:/input/joysticks/js[0]/axis[0]/binding/command=null \    
+#    --prop:/input/joysticks/js[0]/axis[1]/binding/command=null \
+#    --prop:/input/joysticks/js[0]/axis[2]/binding/command=null \
+#    --prop:/input/joysticks/js[0]/axis[3]/binding/command=null \
+#    --prop:/input/joysticks/js[0]/axis[4]/binding/command=null \
+#    --prop:/input/joysticks/js[0]/axis[5]/binding/command=null \
+
+
+
+# Disable the hud.
+#    --disable-hud \
+
+
+# Disable the out the window scene, speeds things up
+#  --prop:/sim/rendering/draw-otw=false

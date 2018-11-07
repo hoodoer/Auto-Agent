@@ -1,0 +1,162 @@
+#ifndef UCAVSTATES_H
+#define UCAVSTATES_H
+
+
+#include "baseState.h"
+#include "neuralNet.h"
+
+
+
+// These defines are
+// needed by gvpApiClient
+// to correctly find
+// the TAO corba headers
+#define LINUX
+#define ACE_5_4_6
+
+
+#include "gvpApiClient.hpp"
+#include "gvpTimer.hpp"
+#include "gvpEntityStore.hpp"
+#include "gvpEllipsoid.hpp"
+#include "gvpDeadReckonEnum.hpp"
+#include "gvpLegend.hpp"
+#include "gvpPlugin.hpp"
+
+
+class Ucav;
+
+
+
+// Global state...
+// this state is always executed by the
+// State machine, it's the primary spot for
+// general state switching logic
+class GlobalState : public BaseState<Ucav>
+{  //  TargetSeeker *targetSeeker;
+
+ public:
+  static GlobalState* Instance();
+
+  virtual void enter(Ucav* ucav);
+  virtual void execute(Ucav* ucav);
+  virtual void exit(Ucav* ucav);
+
+
+ private:
+  void globalAI();
+};
+
+
+
+
+
+// Cruise Route State...
+// follow pre-planned course
+class CruiseRouteState : public BaseState<Ucav>
+{
+ public:
+  static CruiseRouteState* Instance();
+
+  virtual void enter(Ucav* ucav);
+  virtual void execute(Ucav* ucav);
+  virtual void exit(Ucav* ucav);
+
+ private:
+  void cruiseRouteAI();
+};
+
+
+
+
+
+// Take off State...
+// launch the vehicle
+class TakeOffState : public BaseState<Ucav>
+{
+ public:
+  static TakeOffState* Instance();
+
+  virtual void enter(Ucav* ucav);
+  virtual void execute(Ucav* ucav);
+  virtual void exit(Ucav* ucav);
+ 
+ private:
+  void takeOffAI();
+};
+
+
+
+// Land State...
+// land the vehicle
+class LandState : public BaseState<Ucav>
+{
+ public:
+  static LandState* Instance();
+
+  virtual void enter(Ucav* ucav);
+  virtual void execute(Ucav* ucav);
+  virtual void exit(Ucav* ucav);
+ 
+ private:
+  void LandAI();
+};
+
+
+
+// Evade state...
+// evade the threat
+class EvadeState : public BaseState<Ucav>
+{
+ public:
+  static EvadeState* Instance();
+
+  virtual void enter(Ucav* ucav);
+  virtual void execute(Ucav* ucav);
+  virtual void exit(Ucav* ucav);
+ 
+ private:
+  void evadeAI();
+};
+
+
+// Attack state...
+// attack the target
+class AttackState : public BaseState<Ucav>
+{
+ public:
+  static AttackState* Instance();
+
+  virtual void enter(Ucav* ucav);
+  virtual void execute(Ucav* ucav);
+  virtual void exit(Ucav* ucav);
+ 
+ private:
+  void attackAI();
+};
+
+
+
+
+
+// Recovery state...
+// recover from unusual attitudes, or 
+// unforscene circumstances
+class RecoveryState : public BaseState<Ucav>
+{
+ public:
+  static RecoveryState* Instance();
+
+  virtual void enter(Ucav* ucav);
+  virtual void execute(Ucav* ucav);
+  virtual void exit(Ucav* ucav);
+ 
+ private:
+  void recoveryAI();
+};
+
+
+
+
+
+#endif

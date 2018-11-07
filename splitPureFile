@@ -1,0 +1,29 @@
+#!/bin/bash
+
+
+
+pureFileName=pureTrainingSet
+outputFileNameBase=dataSet_
+outputFileName=${outputFileNameBase}
+fileNumber=`wc -l ${pureFileName} | awk '{ print $1 }'`
+outputDir=./trainingFiles/
+
+
+echo "Number of entries: $fileNumber"
+
+
+for ((i = 1; i <= fileNumber; i++))
+do 
+	trainingSet=`sed -n ${i}p ${pureFileName}`
+	#	echo $trainingSet
+	#echo "fileName would be:"
+	outputFileName=${outputDir}${outputFileNameBase}${i}
+	#echo $outputFileName
+	#echo
+	echo $trainingSet > $outputFileName
+done
+
+
+
+
+

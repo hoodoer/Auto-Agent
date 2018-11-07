@@ -1,0 +1,3 @@
+#!/bin/bash
+
+wc -l *.c++ *.h neural/*.cpp neural/*.h fsm/*.c++ fsm/*.h utils/*.h utils/*.c++ utils/*.hxx

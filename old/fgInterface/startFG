@@ -1,0 +1,8 @@
+#!/bin/bash
+
+
+fgfs --native-fdm='socket,out,30,localhost,5050,udp' \
+	--native-ctrls='socket,in,30,,5060,udp' \
+	--aircraft=f16-3d \
+	--geometry=1024x768
+	

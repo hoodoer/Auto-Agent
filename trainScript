@@ -1,0 +1,48 @@
+#!/bin/bash
+
+
+
+# This script is for automating running
+# training sessions on a Neural net using
+# the aiTrainer software
+
+numHiddenNodes=$1
+brainFile=./brains/trainedBrain
+trainingFiles=./trainingFiles/*
+cycles=5000
+counter=0
+
+
+# Make an array of all the training sets
+for i in $trainingFiles
+do
+    array[$counter]=$i
+    let "counter += 1"
+    echo "Setting $i"
+done
+
+
+
+
+
+echo
+echo "Using set $useSet"
+
+
+for ((i=0; i <= cycles; i++))
+do
+    index=$RANDOM
+    let "index %= $counter"
+
+    useSet=${array[index]}
+
+    ./aiTrainer train $useSet ${brainFile}_${numHiddenNodes}_HiddenNodes $numHiddenNodes
+
+    # This shows the percentage done
+    # BC seems slow, with this many
+    # cycles, worth it to spawn as a separate process
+    # and let the other CPU do the division
+    ./progressScript $i $cycles &
+    echo
+done
+

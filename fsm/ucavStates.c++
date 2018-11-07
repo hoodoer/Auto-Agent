@@ -1,0 +1,468 @@
+#include <iostream>
+using namespace std;
+
+
+
+#include "ucavStates.h"
+#include "ucav.h"
+#include "speech.h"
+
+
+
+
+/**************************************************************/
+
+
+// Global state...
+// this state is always executed by the
+// State machine, it's the primary spot for
+// general state switching logic
+GlobalState* GlobalState::Instance()
+{
+  static GlobalState instance;
+  return &instance;
+}
+
+
+void GlobalState::enter(Ucav* ucav)
+{
+  cout<<"GlobalState::enter..."<<endl;
+}
+
+
+
+// This function primarily handles state
+// switching for the state machine
+void GlobalState::execute(Ucav* ucav)
+{
+  // We just rebooted the ucav after an error, see
+  // what was going on when the software crashed
+  if (ucav->getRecoveryBoot())
+    {
+      cout<<"Global state sees that we're starting "
+	  <<"up in recovery mode"<<endl;
+
+      // We were stalled when the Ucav 
+      // software exited, go back to
+      // attempting an attitude recovery
+      if(ucav->getStallState())
+	{
+	  ucav->stateMachine->changeState(RecoveryState::Instance());
+	}
+      else if (ucav->getThreatDetection())
+	{
+	  // If we're not busy trying to recover
+	  // from a stall, and there's a threat 
+	  // out there, go back to Attack mode
+	  ucav->stateMachine->changeState(AttackState::Instance());
+	}
+      else
+	{
+	  // Not sure what was going on when the software crashed
+	  // go to recovery mode just to be safe.
+	  ucav->stateMachine->changeState(RecoveryState::Instance());
+	}
+      cout<<"About to call recoveryBootFinished..."<<endl;
+
+      // reset the boolean...
+      ucav->recoveryBootFinished();
+    }
+
+
+
+
+  // If I'm stalled, and not already trying to recover...
+  if (ucav->getStallState() &&
+      !ucav->stateMachine->isInState(RecoveryState::Instance()))
+    {
+      cout<<"Global state detects that we're stalled, "
+	  <<"flipping to recovery state."<<endl;
+      ucav->stateMachine->changeState(RecoveryState::Instance());
+    }
+
+
+
+  // If there's a threat, and I'm not already in attack, and
+  // I'm not in an emergency recovery state, then switch to 
+  // attack
+  if ((ucav->getThreatDetection()) && 
+      !ucav->stateMachine->isInState(RecoveryState::Instance()) &&
+      !ucav->stateMachine->isInState(AttackState::Instance()))
+    {
+      cout<<"Global state sees a threat, and we're not in "
+	  <<"recovery state, moving to attack..."<<endl;
+      ucav->stateMachine->changeState(AttackState::Instance());
+    }
+
+
+
+  if (ucav->stateMachine->isInState(AttackState::Instance()) &&
+      !ucav->getThreatDetection())
+    {
+      cout<<"Global state sees that the threat's gone, going to "
+	  <<"cruise mode"<<endl;
+      ucav->stateMachine->changeState(CruiseRouteState::Instance());
+    }
+}
+
+
+
+
+void GlobalState::exit(Ucav* ucav)
+{
+  cout<<"GlobalState::exit..."<<endl;
+}
+
+
+
+
+
+/**************************************************************/
+
+
+
+
+// Cruise Route State...
+// follow pre-planned course
+CruiseRouteState* CruiseRouteState::Instance()
+{
+  static CruiseRouteState instance;
+  return &instance;
+}
+
+
+
+
+
+void CruiseRouteState::enter(Ucav* ucav)
+{
+  // Set the first target and switch pilot mode...
+  double wyptLat, wyptLon, wyptAlt;
+
+  ucav->getPositionOfNextWaypoint(wyptLat, wyptLon, wyptAlt);
+  ucav->setTargetSeekerTargetPos(wyptLat, wyptLon, wyptAlt);
+  ucav->setPilotMode(TargetSeekMode);
+}
+
+
+
+
+
+void CruiseRouteState::execute(Ucav* ucav)
+{
+  cout<<"cruiseRouteState::execute..."<<endl;
+
+  static double wyptLat = 0.0, wyptLon = 0.0, wyptAlt = 0.0;
+
+  static int  lastNextWypt = 0;
+  static int  nextWypt     = 0;
+  static char speakWaypoint[100];
+
+  nextWypt = ucav->getNextWaypoint();
+
+  if (nextWypt != lastNextWypt)
+    {
+      sprintf(speakWaypoint, "next waypoint is now %d", nextWypt);
+      sayOutloud(true, speakWaypoint);
+      
+      ucav->getPositionOfNextWaypoint(wyptLat, wyptLon, wyptAlt);
+      ucav->setTargetSeekerTargetPos(wyptLat, wyptLon, wyptAlt);
+    }
+  else if ((ucav->getTargetDistance() <= 926) &&
+	   (nextWypt < ucav->getNumberOfWaypoints()))
+    {
+      ucav->setNextWaypoint(nextWypt + 1);
+    }
+  
+  lastNextWypt = nextWypt;
+}
+
+
+void CruiseRouteState::exit(Ucav* ucav)
+{
+  cout<<"cruiseRouteState::exit..."<<endl;
+}
+
+
+
+
+/**************************************************************/
+
+
+
+
+// Take off State...
+// launch the vehicle
+TakeOffState* TakeOffState::Instance()
+{
+  static TakeOffState instance;
+  return &instance;
+}
+
+
+
+
+void TakeOffState::enter(Ucav* ucav)
+{
+  cout<<"TakeOffState::enter..."<<endl;
+  ucav->setPilotMode(TakeOffMode);
+}
+
+
+
+
+
+
+// Increase our altitude until we're
+// at 25 units of height, then switch
+// state to cruiseRoute...
+void TakeOffState::execute(Ucav* ucav)
+{
+  cout<<"TakeOffState::execute..."<<endl;
+
+  // Climb to this altitude, then switch to cruise state
+  static double climbTo  = 800; // meters
+
+  // Raise the landing gear at this altitude..
+  static double gearUpAt = 100; // meters
+
+
+  static bool   gearUp   = false;
+
+  static double lat, lon, alt, radAlt, heading, pitch, roll;
+
+
+  ucav->getPositionGeo(lat, lon, alt, radAlt, heading, pitch, roll);
+ 
+  if ((!gearUp) && (radAlt > gearUpAt))
+    {
+      ucav->setGearDown(false);
+      gearUp = true;
+    }
+
+  if (radAlt > climbTo)
+    {
+      ucav->stateMachine->changeState(CruiseRouteState::Instance());
+    }
+}
+
+
+
+
+
+
+void TakeOffState::exit(Ucav* ucav)
+{
+  cout<<"TakeOffState::exit..."<<endl;
+}
+
+
+
+
+/**************************************************************/
+
+
+
+
+// Land State...
+// land the vehicle
+LandState* LandState::Instance()
+{
+  static LandState instance;
+  return &instance;
+}
+
+
+void LandState::enter(Ucav* ucav)
+{
+  cout<<"LandState::enter..."<<endl;
+}
+
+
+void LandState::execute(Ucav* ucav)
+{
+  cout<<"LandState::execute..."<<endl;
+}
+
+
+void LandState::exit(Ucav* ucav)
+{
+  cout<<"LandState::exit..."<<endl;
+}
+
+
+
+
+
+/**************************************************************/
+
+
+
+
+// Evade state...
+// evade the threat
+EvadeState* EvadeState::Instance()
+{
+  static EvadeState instance;
+  return &instance;
+}
+
+
+void EvadeState::enter(Ucav* ucav)
+{
+  cout<<"EvadeState::enter..."<<endl;
+}
+
+
+void EvadeState::execute(Ucav* ucav)
+{
+  cout<<"EvadeState::execute..."<<endl;
+}
+
+
+void EvadeState::exit(Ucav* ucav)
+{
+  cout<<"EvadeState::exit..."<<endl;
+}
+
+
+
+
+
+/**************************************************************/
+
+
+
+
+// Attack state...
+// attack the target
+AttackState* AttackState::Instance()
+{
+  static AttackState instance;
+  return &instance;
+}
+
+
+void AttackState::enter(Ucav* ucav)
+{
+  cout<<"AttackState::enter..."<<endl;
+}
+
+
+// Simply count the number of updates
+// in this state, and then mark the 
+// threat as killed. Then revert
+// to the previous state, and if there
+// isn't a previous state, switch
+// to cruiseRoute state
+void AttackState::execute(Ucav* ucav)
+{
+  static int counter = 0;
+  cout<<"AttackState::execute..."<<endl;
+
+  // take 5 ticks to killa threat..
+  if (counter == 5)
+    {
+      counter = 0;
+      cout<<"Succesfully killed the threat!"<<endl;
+      
+      // reset the boolean, since 
+      // I don't have real sensors to 
+      // detect that the threat is really
+      // gone...
+      ucav->threatKilled();
+
+      // Go back to what I was doing before
+      // I had to attack a threat
+      if (!ucav->stateMachine->revertState())
+	{
+	  // revert failed, must not be a 
+	  // previous state to revert to. 
+	  // Change to cruise instead
+	  ucav->stateMachine->changeState(CruiseRouteState::Instance());
+	}
+    }
+  else
+    {
+      counter++;
+    }
+}
+
+
+
+void AttackState::exit(Ucav* ucav)
+{
+  cout<<"AttackState::exit..."<<endl;
+}
+
+
+
+
+/**************************************************************/
+
+
+
+
+// Recovery state...
+// recover from unusual attitudes, or 
+// unforscene circumstances
+RecoveryState* RecoveryState::Instance()
+{
+  static RecoveryState instance;
+  return &instance;
+}
+
+
+void RecoveryState::enter(Ucav* ucav)
+{
+  cout<<"RecoveryState::enter..."<<endl;
+}
+
+
+// Simply count the number of time
+// this is updated. Assume that 5 
+// executions of this function is 
+// enough to fully recover from a 
+// stall. Then, revert to previous
+// state, and if there isn't a 
+// previous state, switch to 
+// cruiseRoute state.
+void RecoveryState::execute(Ucav* ucav)
+{
+  static int counter = 0;
+  cout<<"RecoveryState::execute..."<<endl;
+
+  // take 5 ticks to recovery from
+  // unusual attitude...
+  if (counter == 5)
+    {
+      counter = 0;
+      cout<<"Successfully recovered!"<<endl;
+
+      // reset the stalled boolean, since
+      // I don't really have any sensors
+      // to detect air flow over the wings. 
+      ucav->notStalledAnymore();
+
+      if (!ucav->stateMachine->revertState())
+	{
+	  // revert failed, must not be a 
+	  // previous state to revert to. 
+	  // Change to cruise instead
+	  ucav->stateMachine->changeState(CruiseRouteState::Instance());
+	}
+    }
+  else
+    {
+      counter++;
+    }
+}
+
+
+void RecoveryState::exit(Ucav* ucav)
+{
+  cout<<"RecoveryState::exit..."<<endl;
+}
+
+
+

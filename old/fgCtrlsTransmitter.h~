@@ -1,0 +1,10 @@
+// This class simplifies using sockets to 
+// control the aircraft in Flightgear. 
+// To get FlightGear to listen for UDP 
+// data, start Flightgear like this:
+// fgfs --native-ctrls='socket,in,UPDATERATE,,PORT,udp'
+// Where UPDATERATE is the HZ that udp updates will
+// be sent out, and the
+// PORT where we'll be listening
+//
+// Written by Drew Kirkpatrick, drew.kirkpatrick@gmail.com

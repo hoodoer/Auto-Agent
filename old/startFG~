@@ -1,0 +1,12 @@
+#!/bin/bash
+
+
+fgfs --native-fdm='socket,out,30,localhost,5050,udp' \
+	--native-ctrls='socket,in,30,,5060,udp' \
+	--geometry=1280x1024 \
+	--airport=KDCA \
+	--aircraft=f16-3d
+
+# Check www.airnav.com for airport codes...
+#	--airport=2W6 \  # St.Mary's
+#	--airport=KDCA \ #Reagan National

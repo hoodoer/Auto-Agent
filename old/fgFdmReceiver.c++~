@@ -1,0 +1,20 @@
+// This class simplifies using sockets to 
+// pull FDM data from FlightGear
+// To get FlightGear to output UDP 
+// Data to feed this class's sockets
+// interface, start Flightgear like this:
+// fgfs --native-fdm='socket,out,UPDATERATE,localhost,PORT,udp'
+//
+// Written by Drew Kirkpatrick, drew.kirkpatrick@gmail.com
+
+
+
+
+#include <iostream>
+using namespace std;
+
+
+#include "fgFdmReceiver.h"
+
+
+

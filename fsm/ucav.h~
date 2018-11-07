@@ -1,0 +1,189 @@
+#ifndef UCAV_H
+#define UCAV_H
+
+// The is the class defining a UCAV entity/agent
+
+#include <vector>
+
+#include "baseState.h"
+#include "baseEntity.h"
+#include "stateMachine.h"
+#include "pilot.h"
+
+
+
+
+// Data store of the Ucav
+struct ucavData
+{
+  int  systemTime;
+  bool autoMode;
+  bool stalled;
+  bool errorState; 
+  bool recoveryBoot;
+  bool detectThreat;
+  bool haveNavCourse;
+  bool gearDown; 
+
+  double airSpeed;
+
+  int numberOfWaypoints;
+  int currentWaypoint;
+};
+
+
+// waypoint information
+struct waypointData
+{
+  double lat;
+  double lon;
+  double alt;
+};
+
+
+
+
+class Ucav : public BaseEntity
+{
+ public:
+  Ucav(int newId);
+  ~Ucav();
+
+  // This is the update function, needs 
+  // to be called repeatedly for the
+  // entity to function
+  void update();
+
+
+  // Whether or not to allow
+  // the Statemachine to operate
+  // the aircraft, or defer to 
+  // external manual control
+  void setAutoMode(bool newMode);
+  bool getAutoMode() const;
+
+  
+  // Need altitude for Takeoff
+  // state to correctly operate. 
+  // This will later be handled
+  // by the flight model
+  double getBaroAltitude() const;
+  void   setBaroAltitude(double newAltitude);
+
+
+  // Needed to update Ucav position.
+  void getPositionGeo(double &lat, double &lon, double &alt, double &radAlt,
+		      double &heading, double &pitch, double &roll);
+  void setPositionGeo(double lat, double lon, double alt, double radAlt,
+		      double heading, double pitch, double roll);
+
+  // Needed for Ucav to control the flightmodel
+  void getControlPositions(double &elevator, double &aileron, 
+			   double &rudder, double &throttle);
+  void setControlPositions(double elevator, double aileron, 
+			   double rudder, double throttle);
+
+  void getLatLon(double &lat, double &lon);
+  void setLatLon(double newLat, double newLon);
+
+  // This data comes from the flightmodel
+  float getAirspeed() const;
+  void  setAirspeed(double newAirspeed);
+
+  // Set the state of the gear..
+  bool  getGearDown() const;
+  void  setGearDown(bool newState);
+
+  // This data is for the state machine to use for navigation
+  int  getNumberOfWaypoints() const;
+  int  getNextWaypoint() const;
+  void getPositionOfNextWaypoint(double &lat, double &lon, double &alt);
+  void setNextWaypoint(int newNextWypt);
+
+
+  // Interface functions for 
+  // accessing the Ucav's TargetSeeker NN flier
+  void  setTargetSeekerSideBoundary(float newSideAngleBoundary);
+  float getTargetSeekerSideBoundary() const;
+
+  void  setTargetSeekerVertBoundary(float newVertAngleBoundary);
+  float getTargetSeekerVertBoundary() const;
+
+  void  setTargetSeekerTargetPos(double lat, double lon, double alt);
+  float getTargetDistance() const;
+
+  
+
+  // Simply check the boolean state
+  // of these Ucav variables
+  bool   getStallState()      const;
+  void   notStalledAnymore();
+
+  bool   getErrorState()      const;
+
+  bool   getThreatDetection() const;
+  void   threatKilled();
+
+  bool   getRecoveryBoot()    const;
+  void   recoveryBootFinished();
+
+  // Change the ucav autonomous pilot's mode
+  void   setPilotMode(FlyingMode newMode);
+
+
+  // pointer to the statemachine for
+  // this entity. It's new'd in the 
+  // constructor.
+  StateMachine<Ucav>* stateMachine;
+
+
+
+ private:
+  // These structures
+  // are defined at the top
+  // of this file
+  posStruct      position;
+  ucavData       data;
+  controlsStruct flightControls;
+
+
+  // Pointer to a vector 
+  // of waypoint information records
+  vector<waypointData>* waypoints;
+  
+
+  // Check sensors, and 
+  // update data structure
+  void pollSensors();
+
+  // Dump data to aid a reboot
+  // in attempt to resolve system
+  // error
+  void emergencyDataDump();
+
+  // Checks to see if it's reboot
+  // and try to quickly recover
+  bool emergencyStart();
+
+  // Checks for a waypoint file, 
+  // and reads in the data if it
+  // exists.
+  void readInWaypoints();
+
+
+  // Name of the textfile that 
+  // has the neural network 
+  // for the targetSeeker class
+  string targetSeekerBrain;
+
+  // Class that encapsulates
+  // the target seeking
+  // neural network
+  Pilot *pilot;
+  //  TargetSeeker *targetSeeker;
+};
+
+
+
+
+#endif

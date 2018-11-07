@@ -1,0 +1,11 @@
+#!/bin/bash
+
+
+# This script throws speech commands
+# to the background and returns 
+# immediately. Handly for C style
+# system calls that you don't
+# want to block on
+
+echo $1 | festival --tts &
+echo "Returned from festival call!"

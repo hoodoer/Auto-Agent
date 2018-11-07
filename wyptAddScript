@@ -1,0 +1,17 @@
+cmd localhost 5050 -c "add(wypt1, aircraft, f-18)"
+cmd localhost 5050 -c "setPositionGeo(wypt1, 32.94, -117.30, 1500, 0.0, 0.0, 0.0)"
+
+cmd localhost 5050 -c "add(wypt2, aircraft, f-18)"
+cmd localhost 5050 -c "setPositionGeo(wypt2, 32.92, -116.93, 7000, 0.0, 0.0, 0.0)"
+
+cmd localhost 5050 -c "add(wypt3, aircraft, f-18)"
+cmd localhost 5050 -c "setPositionGeo(wypt3, 32.78, -117.05, 1500, 0.0, 0.0, 0.0)"
+
+cmd localhost 5050 -c "add(wypt4, aircraft, f-18)"
+cmd localhost 5050 -c "setPositionGeo(wypt4, 32.67, -117.24, 2000, 0.0, 0.0, 0.0)"
+
+cmd localhost 5050 -c "add(wypt5, aircraft, f-18)"
+cmd localhost 5050 -c "setPositionGeo(wypt5, 32.65, -117.37, 3000, 0.0, 0.0, 0.0)"
+
+cmd localhost 5050 -c "add(wypt6, aircraft, f-18)"
+cmd localhost 5050 -c "setPositionGeo(wypt6, 32.41, -117.04, 9000, 0.0, 0.0, 0.0)"

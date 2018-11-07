@@ -1,0 +1,62 @@
+Drew Kirkpatrick
+
+Advanced Programming
+Rich White
+CIS 5200
+Fall 2005
+
+
+
+
+Final Project
+
+
+
+I've neglected to do a formal writeup for this project, 
+and instead went through and did a lot of commenting
+in the code. One of the items you were particularly 
+interested in as far as project requirement goes is 
+some file IO. The functions that contain the file IO
+for this project are in ucav.h/ucav.c++. Those private
+functions are:
+
+  // Dump data to aid a reboot
+  // in attempt to resolve system
+  // error
+  void emergencyDataDump();
+
+  // Checks to see if it's reboot
+  // and try to quickly recover
+  bool emergencyStart();
+
+  // Checks for a waypoint file, 
+  // and reads in the data if it
+  // exists.
+  void readInWaypoints();
+
+
+The emergencyDataDump() and emergencyStart() operate on	
+a file "emergencyFile". This file is not there right now. 
+This simple text file is created if the destructor for a 
+Ucav is called when thre is an error. If this file exists
+on startup, emergencyStart() will pull last state data
+from this file, and quickly jump back into the correct
+state. You can see this functionality by running the program
+twice. The first run will create the file. Starting the 
+program again will simulate a "reboot" of the Ucav, 
+and the emergencyStart functionality will execute. 
+
+You can simply delete this file to go back to normal 
+startup. 
+
+
+The readInWaypoints() looks for a textfile with 
+3D position data for waypoints, and puts them into
+a vector. Since I do not have any 3D simulation at
+this time, these waypoints are ignored for now in the
+CruiseRouteState. 
+
+
+Let me know if you have any questions, or problems 
+getting this to compile.
+
